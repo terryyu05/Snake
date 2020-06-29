@@ -1,0 +1,36 @@
+/*
+Making a text file for High Score recording so that even when program ends high score is still saved because I dont know a better way.
+ */
+
+package FileReader;
+
+import java.io.*;
+import java.util.StringTokenizer;
+
+public class HighScore {
+    //subject to change, depending on one's computer and name
+    private static String HighScoreFile = "/Users/terryyu05/Desktop/SnakeGameHighScore.txt";
+    
+    public static Double getHS() {
+        //getting the High Score from the file
+        try {
+            return Double.parseDouble(new StringTokenizer(new BufferedReader(new FileReader(HighScoreFile)).readLine()).nextToken());
+        } catch(IOException e) {
+            e.printStackTrace();
+            System.exit(0);
+            return -1.1;
+        }
+    }
+
+    public static void setHS(double newhiscore) {
+        //changing the High Score in the file
+        try {
+            PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(HighScoreFile)));
+            pw.print(newhiscore);
+            pw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+    }
+}
