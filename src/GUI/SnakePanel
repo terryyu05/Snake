@@ -1,0 +1,256 @@
+/*
+This is the main JPanel for everything, including the Game Over screen and the snake game.
+ */
+
+package GUI;
+
+import FileReader.HighScore;
+import Processor.ArrayBoard;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+public class SnakePanel extends JPanel implements Runnable {
+    //this is making a new Array for the snake
+    public ArrayBoard sc = new ArrayBoard();
+
+    //this is for the Game Over screen
+    SnakeDiff sd = new SnakeDiff();
+
+    //this is for the direction of the snake
+    public static int direction = -1;
+    public static int prevd = -1;
+
+    //this is for the speed of the game and the difficulty
+    public static int difficulty;
+    private int sleeptime;
+
+    //just constants that make it way easier to read
+    //this is for height and width of jpanel
+    private static final int HEIGHT = 450;
+    private static final int WIDTH = 450;
+
+    //this is for directions
+    private static final int UP = 0;
+    private static final int RIGHT = 1;
+    private static final int DOWN = 2;
+    private static final int LEFT = 3;
+
+    //this is for the size of the snake parts and the difference in size of the head of the snake
+    private static final int DIM = 30;
+    private static final int OFFSET = 10;
+
+    //these are the different difficulties
+    private static final int BLACK = 0;
+    private static final int WHITE = 1;
+    private static final int ASIAN = 2;
+
+    //this is for running the thread run(), isDead is true when snake is not on the screen, running is true when snake is moving
+    //first is for adding the Game Over screen only once while looping in run()
+    Thread th = new Thread(this);
+    private boolean running;
+    public static boolean isDead;
+    private boolean first = true;
+
+    public SnakePanel() {
+        //initialization
+        isDead = true;
+        running = false;
+
+        setFocusable(true);
+
+        //starting the run() thread
+        th.start();
+
+        //adding keylistener to this JPanel to detect Up, Down, Left, and Right keys
+        addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int j = e.getKeyCode();
+                if(j == KeyEvent.VK_UP) {
+                    if(running) {
+                        direction = UP;
+                    }
+                }
+                if(j == KeyEvent.VK_RIGHT) {
+                    if (!running) {
+                        //if running is false and right button is clicked, game starts, but if running is true it is normal
+                        System.out.println("Game has started!");
+                        running = true;
+                    }
+                    if(running) {
+                        direction = RIGHT;
+                    }
+                }
+                if(j == KeyEvent.VK_DOWN) {
+                    if(running) {
+                        direction = DOWN;
+                    }
+                }
+                if(j == KeyEvent.VK_LEFT) {
+                    if(running) {
+                        direction = LEFT;
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
+
+    }
+
+    //making size of JPanel
+    public Dimension getPreferredSize() {
+        return new Dimension(WIDTH, HEIGHT);
+
+    }
+
+    //painting everything when isDead is false, aka when Game Over screen isnt there
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if(!isDead) {
+            //painting the balls at the end, so that it can rotate depending on last snake balls direction
+            g.setColor(Color.BLUE);
+            switch(sc.getEndDirection()) {
+                case RIGHT:
+                    g.fillOval(sc.getXpos(sc.getSize()-1) - DIM/2, sc.getYpos(sc.getSize()-1) - DIM/2, DIM, DIM);
+                    g.fillOval(sc.getXpos(sc.getSize()-1) - DIM/2, sc.getYpos(sc.getSize()-1) + DIM/2, DIM, DIM);
+                    break;
+                case UP:
+                    g.fillOval(sc.getXpos(sc.getSize()-1) - DIM/2, sc.getYpos(sc.getSize()-1) + DIM/2, DIM, DIM);
+                    g.fillOval(sc.getXpos(sc.getSize()-1) + DIM/2, sc.getYpos(sc.getSize()-1) + DIM/2, DIM, DIM);
+                    break;
+                case LEFT:
+                    g.fillOval(sc.getXpos(sc.getSize()-1) + DIM/2, sc.getYpos(sc.getSize()-1) - DIM/2, DIM, DIM);
+                    g.fillOval(sc.getXpos(sc.getSize()-1) + DIM/2, sc.getYpos(sc.getSize()-1) + DIM/2, DIM, DIM);
+                    break;
+                case DOWN:
+                    g.fillOval(sc.getXpos(sc.getSize()-1) - DIM/2, sc.getYpos(sc.getSize()-1) - DIM/2, DIM, DIM);
+                    g.fillOval(sc.getXpos(sc.getSize()-1) + DIM/2, sc.getYpos(sc.getSize()-1) - DIM/2, DIM, DIM);
+                    break;
+            }
+
+            //painting the snake color depending on the difficulty level
+            switch(difficulty) {
+                case BLACK:
+                    g.setColor(Color.BLACK);
+                    break;
+                case WHITE:
+                    g.setColor(Color.PINK);
+                    break;
+                case ASIAN:
+                    g.setColor(Color.YELLOW);
+                    break;
+            }
+
+            //painting the head of the snake, so that it can rotate, and also is an OFFSET amount bigger than the other parts
+            switch(direction) {
+                case -1:
+                case RIGHT:
+                    g.fillArc(sc.getXpos(0) - DIM/2 - OFFSET, sc.getYpos(0) - OFFSET/2,DIM + OFFSET,DIM + OFFSET,270,180);
+                    break;
+                case UP:
+                    g.fillArc(sc.getXpos(0) - OFFSET/2, sc.getYpos(0) + DIM/2,DIM + OFFSET,DIM + OFFSET,0,180);
+                    break;
+                case LEFT:
+                    g.fillArc(sc.getXpos(0) + DIM/2, sc.getYpos(0) - OFFSET/2,DIM + OFFSET,DIM + OFFSET,90,180);
+                    break;
+                case DOWN:
+                    g.fillArc(sc.getXpos(0) - OFFSET/2, sc.getYpos(0) - DIM/2 - OFFSET,DIM + OFFSET,DIM + OFFSET,180,180);
+                    break;
+            }
+
+            //looping and painting through the body of the snake
+            for (int i = 1; i < sc.getSize(); i++) {
+                g.fillRect(sc.getXpos(i), sc.getYpos(i), DIM, DIM);
+            }
+
+            //painting the fruits for the snake to eat
+            g.setColor(Color.GREEN);
+            g.fillRect(sc.geteatX(), sc.geteatY(), DIM, DIM);
+            g.setColor(Color.BLACK);
+
+            //painting the score, high score, and difficulty on the top
+            g.drawString(sc.score(), 10, 16);
+            g.drawString("High Score: " + HighScore.getHS(), 160, 16);
+            g.drawString("Difficulty Level: " + difficulty,330,16);
+        }
+    }
+
+    //loops indefinitely to keep the game running
+    public void run() {
+        //loops so that game runs unless its closed
+        while(true) {
+            //this loop is for while the snake is moving
+            while (running) {
+                update();
+                repaint();
+                try {
+                    Thread.sleep(sleeptime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            //this if statement is for the first loop after the snake dies, adds the Game Over screen and repaints the snake screen, making it empty
+            if(first && isDead) {
+                first = false;
+                add(sd);
+                repaint();
+            }
+
+            //this is for the not first loop after the user clicks PLAY in the Game Over screen, removes Game Over screen and sets speed through difficulty selected
+            //also repaints the snake back on the screen
+            if(!first && !isDead) {
+                first = true;
+                remove(sd);
+                switch(difficulty) {
+                    case BLACK:
+                        sleeptime = 140;
+                        break;
+                    case WHITE:
+                        sleeptime = 100;
+                        break;
+                    case ASIAN:
+                        sleeptime = 60;
+                        break;
+                }
+                repaint();
+            }
+            
+            //just loops when the snake is not running to catch when the user wants to start the "running" loop at the start
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void update() {
+        //updates the snake movement, moves it, and checks if dead resets the booleans and the snake array. No gui stuff are done here
+        if(running) {
+            sc.move(direction);
+            prevd = direction;
+            sc.ate();
+            if (sc.isDead()) {
+                isDead = true;
+                running = false;
+                sc.clear();
+                prevd = -1;
+                direction = -1;
+            }
+        }
+    }
+}
