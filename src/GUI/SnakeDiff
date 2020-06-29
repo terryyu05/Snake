@@ -1,0 +1,164 @@
+/*
+This is the Game Over screen, where player selects difficulty levels and starts game
+Too lazy to create a custom start screen so start screen will be game over screen
+ */
+
+package GUI;
+
+import FileReader.HighScore;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+
+public class SnakeDiff extends JPanel {
+    //height and width of this JPanel
+    private static final int HEIGHT = 450;
+    private static final int WIDTH = 450;
+
+    //difficulty level constants
+    private static final int BLACK = 0;
+    private static final int WHITE = 1;
+    private static final int ASIAN = 2;
+
+    //scores
+    private static double score = 0;
+    private static double hiscore = 0;
+    private static JLabel pscore = new JLabel();
+    private static JLabel phiscore = new JLabel();
+
+    
+    private static int difficulty;
+    //made so that a difficulty has to be selected to start game
+    private static boolean selected = false;
+    
+
+    public SnakeDiff() {
+        //making focusable so that it can be clicked
+        setFocusable(true);
+        //made null layout so it can have a custom layout
+        setLayout(null);
+        setBackground(Color.LIGHT_GRAY);
+        setOpaque(true);
+
+        //labels for score
+        JLabel gameover = new JLabel("GAME OVER", JLabel.CENTER);
+        gameover.setFont(new Font("DialogInput", Font.BOLD, 70));
+        gameover.setBounds(0,15,450,60);
+        gameover.setVisible(true);
+
+        updateScore();
+        pscore.setFont(new Font("Serif", Font.PLAIN, 20));
+        pscore.setBounds(165,110,120,20);
+        pscore.setVisible(true);
+
+        phiscore.setFont(new Font("Serif", Font.PLAIN, 20));
+        phiscore.setBounds(120,140,180,20);
+        phiscore.setVisible(true);
+
+        add(gameover);
+        add(pscore);
+        add(phiscore);
+
+        //buttons for difficulty, used radio buttons so that it can only select one button at a time
+        JLabel difflabel = new JLabel("Difficulty (easy --> hard): ", JLabel.CENTER);
+        difflabel.setFont(new Font("Monospaced", Font.BOLD, 18));
+        difflabel.setBounds(0, 230, 450, 18);
+        difflabel.setVisible(true);
+
+        JRadioButton easy = new JRadioButton("Black");
+        easy.setActionCommand("easy");
+        easy.addActionListener(this::actionPerformed);
+
+        JRadioButton medium = new JRadioButton("White");
+        medium.setActionCommand("med");
+        medium.addActionListener(this::actionPerformed);
+
+        JRadioButton hard = new JRadioButton("Asian");
+        hard.setActionCommand("hard");
+        hard.addActionListener(this::actionPerformed);
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(easy);
+        group.add(medium);
+        group.add(hard);
+
+        JPanel radioPanel = new JPanel(new GridLayout(1, 3));
+        radioPanel.setBounds(40, 260, 450, 20);
+        radioPanel.add(easy);
+        radioPanel.add(medium);
+        radioPanel.add(hard);
+        radioPanel.setBackground(Color.LIGHT_GRAY);
+        radioPanel.setOpaque(true);
+
+        radioPanel.setVisible(true);
+
+        add(difflabel);
+        add(radioPanel);
+
+        //start button
+        JButton start = new JButton("START");
+        start.setFont(new Font("SansSerif", Font.BOLD, 20));
+        start.setBounds(119, 322, 180, 90);
+        start.setBackground(Color.GRAY);
+        start.setOpaque(true);
+        start.setBorderPainted(false);
+        start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(selected) {
+                    System.out.println("Started; Difficulty " + difficulty);
+                    SnakePanel.difficulty = difficulty;
+                    //this below starts the game and removes this jpanel
+                    SnakePanel.isDead = false;
+                }
+            }
+        });
+
+        add(start);
+    }
+
+    //updates the score on the Game Over screen before it shows
+    public static void updateScore() {
+        if(score > HighScore.getHS()) {
+            HighScore.setHS(score);
+        }
+        hiscore = HighScore.getHS();
+        pscore.setText("Score: " + score + " in");
+        phiscore.setText("High Score: " + hiscore + " in");
+    }
+
+    //setting size of the JPanel
+    public Dimension getPreferredSize() {
+        return new Dimension(WIDTH, HEIGHT);
+    }
+
+    //setting the score so it can be set from ArrayBoard clear() method
+    public static void setScore(double i) {
+        score = i;
+        updateScore();
+    }
+
+    //action detection for the JRadio buttons, which outputs a string when clicked
+    //string is what the difficulty is
+    public void actionPerformed(ActionEvent e) {
+        if("easy".equals(e.getActionCommand())) {
+            selected = true;
+            difficulty = BLACK;
+        }
+        else if("med".equals(e.getActionCommand())) {
+            selected = true;
+            difficulty = WHITE;
+        }
+        else if("hard".equals(e.getActionCommand())) {
+            selected = true;
+            difficulty = ASIAN;
+        }
+        else{
+            System.out.println("err: difficulty unknown");
+            System.exit(0);
+        }
+    }
+}
