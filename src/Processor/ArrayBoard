@@ -1,0 +1,207 @@
+/*
+This is where the snake lives, the array that holds all the info about the snake
+ */
+
+package Processor;
+
+import GUI.SnakePanel;
+import GUI.SnakeDiff;
+
+import java.util.ArrayList;
+
+public class ArrayBoard {
+    //creating the x coord arraylist for the snake and the y coord
+    //used arraylist because faster to call and flexible size
+    private ArrayList<Integer> xpos = new ArrayList<>();
+    private ArrayList<Integer> ypos = new ArrayList<>();
+    
+    //this is the coord which the snake just left, or on initialization would have just left
+    //used as a placeholder for if the snake eats a berry where it would grow so it doesnt grow into a wall or grow wierdly
+    private int xadd = 1;
+    private int yadd = 7;
+
+    //direction constants to make reading easier
+    private static final int UP = 0;
+    private static final int RIGHT = 1;
+    private static final int DOWN = 2;
+    private static final int LEFT = 3;
+
+    //where the first berry is spawned, and where future will spawn
+    private int eatX = 10;
+    private int eatY = 7;
+
+    public ArrayBoard() {
+        //initializing the first snake
+        addCoord(4, 7);
+        addCoord(3, 7);
+        addCoord(2, 7);
+    }
+
+    private void addCoord(int x, int y) {
+        //making it easier to add snake coordinates
+        xpos.add(x);
+        ypos.add(y);
+    }
+
+    public int getXpos(int i) {
+        //returning not the x position, but the x position on the jPanel to make it easier to paint in SnakePanel's paintComponent
+        return 30*xpos.get(i);
+    }
+
+    public int getYpos(int i) {
+        //same as above but for the y position
+        return 30*ypos.get(i);
+    }
+
+    public int getSize() {
+        //returning the size of the snake, useful
+        return xpos.size();
+    }
+
+    public void clear() {
+        //clearing the snake and fruits when dead and creating new ones, also sending score to Game Over screen
+        System.out.println("Game has ended! " + score());
+        SnakeDiff.setScore(getSize()/25.0);
+        xpos.clear();
+        ypos.clear();
+        addCoord(4, 7);
+        addCoord(3, 7);
+        addCoord(2, 7);
+        eatX = 10;
+        eatY = 7;
+    }
+
+    private void change(int dx, int dy) {
+        //changing the snake coordinates made easier
+        xpos.set(0, xpos.get(0) + dx);
+        ypos.set(0, ypos.get(0) + dy);
+    }
+
+    public void move(int direction) {
+        //moving the snake based on direction, just a lot of logic
+        xadd = xpos.get(getSize()-1);
+        yadd = ypos.get(getSize()-1);
+        for (int i = getSize() - 1; i > 0; i--) {
+            xpos.set(i, xpos.get(i-1));
+            ypos.set(i, ypos.get(i-1));
+        }
+        //also for this made it so that the snake cant move in on itself and only has 3 directions to move
+        switch(direction) {
+            case UP:
+                if(SnakePanel.prevd != DOWN) {
+                    change(0, -1);
+                }
+                else {
+                    SnakePanel.direction = DOWN;
+                    change(0, 1);
+                }
+                break;
+            case RIGHT:
+                if(SnakePanel.prevd != LEFT) {
+                    change(1, 0);
+                }
+                else {
+                    SnakePanel.direction = LEFT;
+                    change(-1, 0);
+                }
+                break;
+            case DOWN:
+                if(SnakePanel.prevd != UP) {
+                    change(0, 1);
+                }
+                else {
+                    SnakePanel.direction = UP;
+                    change(0, -1);
+                }
+                break;
+            case LEFT:
+                if(SnakePanel.prevd != RIGHT) {
+                    change(-1, 0);
+                }
+                else {
+                    SnakePanel.direction = RIGHT;
+                    change(1, 0);
+                }
+                break;
+            default:
+                System.out.println("syst err: direction unknown");
+                System.exit(0);
+        }
+    }
+
+    public void ate() {
+        //checking to see if player has eaten a fruit and addign a new fruit at a random place not on player snake
+        //may cause player to lag a lot if player snake is big, so rep is typed for each time the random is on a player and it has to create a new Random place
+        //if rep is repeated too many times it may lag
+        if((xpos.get(0) == eatX) && (ypos.get(0) == eatY)) {
+            addCoord(xadd, yadd);
+            System.out.println("You have eaten a pill! current " + score());
+            while(true) {
+                boolean rep = false;
+                System.out.println("rep");
+                eatX = (int) (15 * Math.random());
+                eatY = (int) (15 * Math.random());
+                for (int i = 0; i < getSize(); i++) {
+                    for (int j = 0; j < getSize(); j++) {
+                        if (eatX == xpos.get(i) && eatY == ypos.get(j)) {
+                            rep = true;
+                        }
+                    }
+                }
+                if(!rep) {
+                    break;
+                }
+            }
+            System.out.println("New pill spawned at " + eatX + ", " + eatY);
+        }
+    }
+
+    public Integer geteatX() {
+        //same as before, but returns berry location instead
+        return 30*eatX;
+    }
+
+    public Integer geteatY() {
+        //same as before, but returns berry location instead
+        return 30*eatY;
+    }
+
+    public Boolean isDead() {
+        //checking if its dead to either crashing into wall or into itself
+        if((xpos.get(0) > 14) || (xpos.get(0) < 0) || (ypos.get(0) > 14) || (ypos.get(0) < 0)) {
+            return true;
+        }
+        for (int i = 1; i < getSize(); i++) {
+            if((xpos.get(0).equals(xpos.get(i))) && (ypos.get(0).equals(ypos.get(i)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Integer getEndDirection() {
+        //checking the direction of the last snake block for the balls at the end, used from data from last two blocks
+        if(xpos.get(getSize() - 1).equals(xpos.get(getSize() - 2))) {
+            if(ypos.get(getSize()-1) - ypos.get(getSize()-2) == 1) {
+                return UP;
+            }
+            else {
+                return DOWN;
+            }
+        }
+        else {
+            if(xpos.get(getSize()-1) - xpos.get(getSize()-2) == 1) {
+                return LEFT;
+            }
+            else {
+                return RIGHT;
+            }
+        }
+    }
+
+    public String score() {
+        //outputs the score to make life easier
+        String out = "Score: " + getSize()/25.0 + " inches";
+        return out;
+    }
+}
