@@ -1,0 +1,31 @@
+/*
+This is where the JFrame which holds everything is made and run
+ */
+
+import GUI.SnakePanel;
+
+import javax.swing.*;
+
+public class SnakeBoard {
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
+    }
+
+    public static void createAndShowGUI() {
+        //creating JFrame
+        JFrame snake = new JFrame();
+        snake.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //adding the SnakePanel
+        SnakePanel sp = new SnakePanel();
+        snake.add(sp);
+        snake.pack();
+        snake.setResizable(false);
+        snake.setVisible(true);
+    }
+}
